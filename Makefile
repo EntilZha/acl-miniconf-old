@@ -17,16 +17,17 @@ format-web:
 format: format-python format-web
 
 run:
-	export FLASK_DEBUG=True; export FLASK_DEVELOPMENT=True; python3 main.py sitedata/
+	python main.py debug=true
 
 freeze:
-	python3 main.py sitedata/ --build
+	python main.py build=true
 
 # check code format
 format-check:
-	(isort -rc $(PYTHON_FILES) --check-only --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88) && (black -t py37 --check $(PYTHON_FILES)) || (echo "run \"make format\" to format the code"; exit 1)
-	pylint -j0 $(PYTHON_FILES)
-	mypy --show-error-codes $(PYTHON_FILES)
+	isort --check .
+	black --check .
+	pylint --errors-only -j0 main.py
+	mypy --show-error-codes main.py
 	npx prettier $(JS_FILES) $(CSS_FILES) --check
 	npx eslint $(JS_FILES)
 	@echo "format-check passed"

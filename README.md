@@ -1,24 +1,8 @@
-## MiniConf
+## ACLconf
 
-<a href="https://mini-conf.github.io/index.html">MiniConf</a> is a virtual conference in a box. It manages the papers, schedules, and speakers for an academic conference run virtually. It can be easily integrated with interactive tools such as video, chat, and QA.
-
-<img src="https://raw.githubusercontent.com/Mini-Conf/Mini-Conf/master/miniconf.gif">
-
-MiniConf was originally built to host <a href="https://iclr.cc/virtual_2020">ICLR 2020</a> a virtual conference with 6000 participants and have been used to host a wide variety of major conferences.
-
-* AAAI 2021 
-* [ACMC 2020 (Australian Computer Music Conference)](https://acmc2020.com/index.html)
-* [ACM-CHIL 2020 (Conference on Health, Inference, and Learning)](https://www.chilconference.org/)
-* [ACL 2020 (Association of Computational Linguistics)](https://virtual.acl2020.org/index.html)
-* [AIStats 2020](https://aistats2020.net/)
-* [AKBC 2020 (Automated Knowledge Base Construction)](https://akbc.apps.allenai.org/index.html)
-* [EMNLP 2020 (Empirical Methods in NLP)](https://virtual.2020.emnlp.org/index.html)
-* [ICLR 2020 (International Conference on Learning Representations)](https://iclr.cc/virtual_2020)
-* [ICML 2020 (International Conference on Machine Learning)](https://icml.cc/virtual/2020/index.html)
-* [IEEE VIS 2020 (IEEE conference on Visualization and Visual Analytics)](https://virtual.ieeevis.org/)
-* [NeurIPS 2020 (Neural Information Processing Systems Conference)](https://neurips.cc/virtual/2020/public/)
-* [SIGIR 2020 (Information Retrieval)](https://sigir-schedule.baai.ac.cn/papers)
-* [Data Science Capstone Exhibition, University of Pretoria](https://up-mitc-ds.github.io/808exhibition2020/index.html)
+ACLconf is a virtual conference package adapted from [miniconf](https://github.com/Mini-Conf/Mini-Conf) for hosting *ACL conferences.
+It manages the papers, schedules, and speakers for an academic conference run virtually.
+It can be easily integrated with interactive tools such as video, chat, and QA.
 
 It is designed to be:
 
@@ -26,17 +10,36 @@ It is designed to be:
 * Modifiable without a database using CSV files.
 * Easy to extend to fit any backend or additional frontend tools. 
 
+Miniconf accomplishes by:
+- Starting a regular web server
+- Creating an index of files
+- Crawl the index of files and save static versions
+- The static crawl is the source of the static site
+
 ## Links
-Demo system: <a href='http://www.mini-conf.org'> http://www.mini-conf.org</a>
 
-Source Code: <a href='https://github.com/Mini-Conf/Mini-Conf'> https://github.com/Mini-Conf/Mini-Conf</a>
+- Source Code: [https://github.com/entilzha/acl-conf](https://github.com/entilzha/acl-conf)
 
-## Get Started
+## Setup
 
-<pre>
-> pip install -r requirements.txt
-> make run
-</pre>
+1. Install [miniconda](https://docs.conda.io/en/latest/miniconda.html), which manages python versions.
+2. Install [poetry](https://python-poetry.org/), which manages python dependencies
+
+Setup a working development environment by:
+
+```
+# With poetry already installed
+conda create -n acl python=3.10
+conda activate acl
+poetry install
+make run
+```
+
+
+## Running
+
+1. To deploy a static version to `build`, run `make freeze` which is equivalent to `python main.py build=true`
+2. To develop, run `make run` which is equivalent to `python main.py debug=true`
 
 When you are ready to deploy run `make freeze` to get a static version of the site in the `build` folder. 
 

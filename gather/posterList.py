@@ -1,19 +1,21 @@
 from __future__ import print_function
-import pickle
-import os.path
-import time
-import json
+
 import csv
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
+import json
+import os.path
+import pickle
+import time
+
 from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 # Poster lists will be saved as csv spreadsheets in this directory.
 rootCsvDir = "data/csv"
 
 # Config file contains filenames with posters and towns information.
 with open("config.json", "r") as inputFile:
-    cfg = json.load(inputFile);
+    cfg = json.load(inputFile)
 # This file contains the spawn links to teleport straight to a given poster.
 posterJsonFilledFname = cfg["POSTER_JSON_FILLED_FNAME"]
 with open(posterJsonFilledFname, "r") as inputFile:
@@ -33,7 +35,7 @@ for iPoster in allPosterData:
     if not iTown in allTowns:
         allTowns[iTown] = {}
     allTowns[iTown]["townCoord"] = poster["townCoord"]
-    posterIndex = poster["index"];
+    posterIndex = poster["index"]
     allTowns[iTown][posterIndex] = poster
     if posterIndex > maxIndex:
         maxIndex = posterIndex
@@ -45,11 +47,15 @@ outKeys = ["townCoord", "posterCoord", "name", "page", "zoom", "spawnUrl"]
 for iTown in allTowns:
     townCoord = allTowns[iTown]["townCoord"]
     csvFname = f"{rootCsvDir}/{townCoord}.csv"
-    with open(csvFname, 'w') as towncsv:
+    with open(csvFname, "w") as towncsv:
         print(f"Writing {csvFname}")
-        towncsvWriter = csv.writer(towncsv);
-        towncsvWriter.writerow(["If author isn't at poster, you can use RocketChat on their posterPage to chat"]);
-        towncsvWriter.writerow(outKeys);
+        towncsvWriter = csv.writer(towncsv)
+        towncsvWriter.writerow(
+            [
+                "If author isn't at poster, you can use RocketChat on their posterPage to chat"
+            ]
+        )
+        towncsvWriter.writerow(outKeys)
         # Looping by index to ensure correct ordering of posters.
         for iPoster in range(maxIndex + 1):
             if iPoster not in allTowns[iTown]:
@@ -78,8 +84,10 @@ for iTown in allTowns:
 # - add yourself as test user for your app
 
 # Then run rest of this file
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive']
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
 
 def credentials():
@@ -96,8 +104,8 @@ def credentials():
     """
     creds = None
     # User tokens, created automatically by this function
-    if os.path.exists('data/credentials/token.pickle'):
-        with open('data/credentials/token.pickle', 'rb') as token:
+    if os.path.exists("data/credentials/token.pickle"):
+        with open("data/credentials/token.pickle", "rb") as token:
             creds = pickle.load(token)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -105,21 +113,23 @@ def credentials():
         else:
             # See here: https://cloud.google.com/docs/authentication/getting-started to obtain the data/credentials/credentials.json file
             flow = InstalledAppFlow.from_client_secrets_file(
-                    'data/credentials/credentials.json', SCOPES)
+                "data/credentials/credentials.json", SCOPES
+            )
             creds = flow.run_local_server(port=0)
-        with open('data/credentials/token.pickle', 'wb') as token:
+        with open("data/credentials/token.pickle", "wb") as token:
             pickle.dump(creds, token)
     return creds
+
 
 creds = credentials()
 
 # This file contains the Google Sheets ids that are used to form Google Sheets URLs.
-spreadsheetFname = cfg["POSTER_LIST_GSHEET_FNAME"];
+spreadsheetFname = cfg["POSTER_LIST_GSHEET_FNAME"]
 try:
     with open(spreadsheetFname, "r") as input_file:
         uploadedSessionFiles = json.load(input_file)
 except FileNotFoundError:
-    print(f"{spreadsheetFname} not found");
+    print(f"{spreadsheetFname} not found")
     uploadedSessionFiles = {}
 
 
@@ -128,82 +138,82 @@ def callback(requestId, response, exception):
     if exception:
         print(exception)
 
+
 # To avoid hitting quota problems
-maxBatch = 10;
+maxBatch = 10
 # This first service will populate the spreadsheets.
-API = build('sheets', 'v4', credentials=creds)
-service = API;
+API = build("sheets", "v4", credentials=creds)
+service = API
 sheet = service.spreadsheets()
-gsheetBatch = API.new_batch_http_request(callback = callback)
+gsheetBatch = API.new_batch_http_request(callback=callback)
 
 # This service can update permissions of Google drive files to make them readable by anyone.
-drive_service = build('drive', 'v3', credentials=creds)
-all_permission = {
-	'type': 'anyone',
-	'role': 'reader'
-}
+drive_service = build("drive", "v3", credentials=creds)
+all_permission = {"type": "anyone", "role": "reader"}
 batch = drive_service.new_batch_http_request(callback=callback)
-
 
 
 # This creates a request to insert the content of a csv file into a Google sheet.
 def csvToGsheetRequest(gsheetId, csvFname, iSession, townCoord):
-    with open(csvFname, 'r') as csvFile:
+    with open(csvFname, "r") as csvFile:
         csvContents = csvFile.read()
     body = {
-            'requests': [
-                {
-                    'pasteData': {
-                        "coordinate": {
-                            "sheetId": 0,
-                            "rowIndex": "0",
-                            "columnIndex": "0",
-                            },
-                        "data": csvContents,
-                        "type": 'PASTE_NORMAL',
-                        "delimiter": ',',
-                        }
+        "requests": [
+            {
+                "pasteData": {
+                    "coordinate": {
+                        "sheetId": 0,
+                        "rowIndex": "0",
+                        "columnIndex": "0",
                     },
-                {
-                    "mergeCells": {
-                        "range": {
-                            "sheetId": 0,
-                            "startRowIndex": 0,
-                            "endRowIndex": 0,
-                            "startColumnIndex": 0,
-                            "endColumnIndex": 15
-                            },
-                        "mergeType": "MERGE_ALL"
-                        }
+                    "data": csvContents,
+                    "type": "PASTE_NORMAL",
+                    "delimiter": ",",
+                }
+            },
+            {
+                "mergeCells": {
+                    "range": {
+                        "sheetId": 0,
+                        "startRowIndex": 0,
+                        "endRowIndex": 0,
+                        "startColumnIndex": 0,
+                        "endColumnIndex": 15,
                     },
-                {
-                    "updateSheetProperties": {
-                        "properties": {
-                            "sheetId": 0,
-                            "title": "Poster pages",
-                            },
-                        "fields": "title",
-                        }},
-                    {"updateSpreadsheetProperties": {
-                        "properties": {
-                            "title": f"session {iSession}, town {townCoord}",
-                            },
-                        "fields": "title",
-                        }},
-                    ]
-            }
+                    "mergeType": "MERGE_ALL",
+                }
+            },
+            {
+                "updateSheetProperties": {
+                    "properties": {
+                        "sheetId": 0,
+                        "title": "Poster pages",
+                    },
+                    "fields": "title",
+                }
+            },
+            {
+                "updateSpreadsheetProperties": {
+                    "properties": {
+                        "title": f"session {iSession}, town {townCoord}",
+                    },
+                    "fields": "title",
+                }
+            },
+        ]
+    }
     request = API.spreadsheets().batchUpdate(spreadsheetId=gsheetId, body=body)
     return request
 
 
 # This is assuming we are building the lists for the rooms in poster session 0.
 # This only changes the names in the spreadsheets.
-iSession = 0;
+iSession = 0
 # For testing with small number of requests, set nRoomMax to a small value.
-i = 0;
-nRoomMax = min(1000, cfg["MAX_TOWN"]);
+i = 0
+nRoomMax = min(1000, cfg["MAX_TOWN"])
 for row in range(5):
-    for col in ['A', 'B', 'C', 'D', 'E']:
+    for col in ["A", "B", "C", "D", "E"]:
         if i >= nRoomMax:
             break
         i += 1
@@ -215,11 +225,11 @@ for row in range(5):
             # Avoids errors about too many requests / sec -- adjust as needed.
             time.sleep(2)
             batch = drive_service.new_batch_http_request(callback=callback)
-            gsheetBatch = API.new_batch_http_request(callback = callback)
+            gsheetBatch = API.new_batch_http_request(callback=callback)
 
         # get csv file
         townCoord = f"{col}{row}"
-        townId=f"{iSession}{townCoord}"
+        townId = f"{iSession}{townCoord}"
         print(f"Town {townId}")
         townCsv = f"{rootCsvDir}/{townCoord}.csv"
         if not os.path.exists(townCsv):
@@ -232,27 +242,31 @@ for row in range(5):
             response = service.spreadsheets().create(body=spreadsheet_body).execute()
             # Avoids errors about too many requests / sec -- adjust as needed.
             time.sleep(2)
-            uploadedSessionFiles[townId] = response['spreadsheetId'];
+            uploadedSessionFiles[townId] = response["spreadsheetId"]
             gsheetId = uploadedSessionFiles[townId]
             print(f"Url for spreadsheet {townId}: {response['spreadsheetUrl']}")
             # Following updates permissions to allow everyone to read
             # This requires to enable Drive API for the project -- will be prompted
             # to do so in script output if not done before.
-            batch.add(drive_service.permissions().create(
-                fileId=gsheetId,
-                body=all_permission,
-                fields='id',
-                ))
+            batch.add(
+                drive_service.permissions().create(
+                    fileId=gsheetId,
+                    body=all_permission,
+                    fields="id",
+                )
+            )
         else:
-            print(f"{townId} already created: {uploadedSessionFiles[townId]}");
+            print(f"{townId} already created: {uploadedSessionFiles[townId]}")
         # Other keys of interest: spreadsheetUrl, sheets
         gsheetId = uploadedSessionFiles[townId]
-        gsheetBatch.add(csvToGsheetRequest(
-            gsheetId = gsheetId,
-            csvFname=townCsv,
-            iSession=iSession,
-            townCoord=townCoord
-            ))
+        gsheetBatch.add(
+            csvToGsheetRequest(
+                gsheetId=gsheetId,
+                csvFname=townCsv,
+                iSession=iSession,
+                townCoord=townCoord,
+            )
+        )
 
 gsheetBatch.execute()
 batch.execute()
